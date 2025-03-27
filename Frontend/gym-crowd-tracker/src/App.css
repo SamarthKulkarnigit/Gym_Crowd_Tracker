@@ -1,8 +1,13 @@
 #root {
-  max-width: 1280px;
+  display:flex;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 16px;
+  height:100vh;
   text-align: center;
+}
+
+body{
+  background-color: slateblue;
 }
 
 
