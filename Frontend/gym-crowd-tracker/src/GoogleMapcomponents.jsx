@@ -40,6 +40,7 @@ const GoogleMapComponent = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
+            console.log(position)
             const userLocation = {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
