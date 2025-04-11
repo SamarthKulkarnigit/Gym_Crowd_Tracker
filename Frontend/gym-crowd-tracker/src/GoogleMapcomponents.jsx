@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
 
 const libraries = ["marker"];
-
 const center = { lat: 12.9716, lng: 77.5946 };
 
 const mapOptions = {
@@ -10,15 +9,15 @@ const mapOptions = {
   center,
   zoom: 13,
   minZoom: 13,
-  maxZoom: 13,
+  //maxZoom: 13,
 };
 
-// Predefined markers with random max and current capacities
+// Predefined gym markers
 const markers = [
   { lat: 12.9716, lng: 77.5946, color: "red", name: "Location A" },
   { lat: 12.975, lng: 77.59, color: "yellow", name: "Location B" },
   { lat: 12.978, lng: 77.596, color: "green", name: "Location C" },
-  { lat: 12.87602224051442,lng: 77.59562093805964,  color: "lightgreen", name: "Location D" },
+  { lat: 12.87602224051442, lng: 77.59562093805964, color: "green", name: "Location D" },
 ];
 
 const GoogleMapComponent = () => {
@@ -34,14 +33,43 @@ const GoogleMapComponent = () => {
       const map = new window.google.maps.Map(document.getElementById("map"), mapOptions);
       mapRef.current = map;
 
-      // Add predefined markers with hover info windows
+      // Add gym markers
       markers.forEach((marker) => addMarker(marker, map));
+
+      // Add user location marker
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+
+            new google.maps.Marker({
+              position: userLocation,
+              map,
+              title: "You are here",
+              icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 10,
+                fillColor: "#4285F4", // Google blue
+                fillOpacity: 1,
+                strokeColor: "white",
+                strokeWeight: 2,
+              },
+            });
+          },
+          (error) => {
+            console.error("Error getting user location:", error);
+          }
+        );
+      }
     }
   }, [isLoaded]);
 
   const addMarker = (marker, map) => {
-    const maxCapacity = Math.floor(Math.random() * 51) + 50; // Random between 50-100
-    const currentCapacity = Math.floor(Math.random() * maxCapacity); // Random below maxCapacity
+    const maxCapacity = Math.floor(Math.random() * 51) + 50;
+    const currentCapacity = Math.floor(Math.random() * maxCapacity);
 
     const infoWindow = new google.maps.InfoWindow({
       content: `
@@ -75,12 +103,10 @@ const GoogleMapComponent = () => {
       },
     });
 
-    // Show info window on hover
     mapMarker.addListener("mouseover", () => {
       infoWindow.open(map, mapMarker);
     });
 
-    // Hide info window when mouse leaves
     mapMarker.addListener("mouseout", () => {
       infoWindow.close();
     });
