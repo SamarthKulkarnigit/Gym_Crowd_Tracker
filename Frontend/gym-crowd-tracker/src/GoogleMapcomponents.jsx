@@ -1,18 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
 
 const libraries = ["marker"];
-const center = { lat: 12.9716, lng: 77.5946 };
 
-const mapOptions = {
-  mapId: "471b8230d9134e90",
-  center,
-  zoom: 13,
-  minZoom: 13,
-  //maxZoom: 13,
-};
-
-// Predefined gym markers
 const markers = [
   { lat: 12.9716, lng: 77.5946, color: "red", name: "Location A" },
   { lat: 12.975, lng: 77.59, color: "yellow", name: "Location B" },
@@ -22,6 +12,7 @@ const markers = [
 
 const GoogleMapComponent = () => {
   const mapRef = useRef(null);
+  const [userLocation, setUserLocation] = useState(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: "AIzaSyDuKrtDZNRCIUEnEToN9Ic1lhd4qCeUSu0",
@@ -29,44 +20,53 @@ const GoogleMapComponent = () => {
   });
 
   useEffect(() => {
-    if (isLoaded && !mapRef.current) {
-      const map = new window.google.maps.Map(document.getElementById("map"), mapOptions);
+    // Step 1: Get user's location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLoc = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          setUserLocation(userLoc);
+        },
+        (error) => {
+          console.error("Error getting user location:", error);
+        }
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    // Step 2: Once both map and user location are ready, initialize map
+    if (isLoaded && userLocation && !mapRef.current) {
+      const map = new window.google.maps.Map(document.getElementById("map"), {
+        mapId: "471b8230d9134e90",
+        center: userLocation,
+        zoom: 13,
+        minZoom: 13,
+      });
       mapRef.current = map;
 
-      // Add gym markers
+      // User marker
+      new google.maps.Marker({
+        position: userLocation,
+        map,
+        title: "You are here",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: "#4285F4",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2,
+        },
+      });
+
+      // Gym markers
       markers.forEach((marker) => addMarker(marker, map));
-
-      // Add user location marker
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            console.log(position)
-            const userLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            };
-
-            new google.maps.Marker({
-              position: userLocation,
-              map,
-              title: "You are here",
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 10,
-                fillColor: "#4285F4", // Google blue
-                fillOpacity: 1,
-                strokeColor: "white",
-                strokeWeight: 2,
-              },
-            });
-          },
-          (error) => {
-            console.error("Error getting user location:", error);
-          }
-        );
-      }
     }
-  }, [isLoaded]);
+  }, [isLoaded, userLocation]);
 
   const addMarker = (marker, map) => {
     const maxCapacity = Math.floor(Math.random() * 51) + 50;
@@ -104,16 +104,12 @@ const GoogleMapComponent = () => {
       },
     });
 
-    mapMarker.addListener("mouseover", () => {
-      infoWindow.open(map, mapMarker);
-    });
-
-    mapMarker.addListener("mouseout", () => {
-      infoWindow.close();
-    });
+    mapMarker.addListener("mouseover", () => infoWindow.open(map, mapMarker));
+    mapMarker.addListener("mouseout", () => infoWindow.close());
   };
 
-  if (!isLoaded) return <div>Loading...</div>;
+  if (!isLoaded) return <div>Loading Map...</div>;
+  if (!userLocation) return <div>Getting your location...</div>;
 
   return <div id="map" style={{ width: "60vw", height: "750px" }} />;
 };
