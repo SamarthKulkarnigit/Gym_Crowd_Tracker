@@ -37,6 +37,7 @@ const GoogleMapComponent = () => {
     const fetchGyms = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/gyms");
+        console.log(res.data)
         setGyms(res.data);
       } catch (err) {
         console.error("Error fetching gyms:", err);
