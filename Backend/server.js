@@ -1,5 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const gymRoutes = require("./routes/gymRoutes");
 
@@ -8,7 +9,7 @@ dotenv.config();
 connectDB();
 
 const app = express();
-
+app.use(cors());
 // Middleware to parse JSON requests
 app.use(express.json())
 app.use("/api", gymRoutes);
